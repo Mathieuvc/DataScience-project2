@@ -1,1 +1,68 @@
+DROP SCHEMA IF EXISTS mytunes_dim;
 
+CREATE SCHEMA mytunes_dim;
+
+USE mytunes_dim;
+
+/* creating customer dimension */
+
+CREATE TABLE IF NOT EXISTS dim_customers(
+	customer_key INT auto_increment PRIMARY KEY,
+    customer_id INT NOT NULL,
+    company VARCHAR(80),
+    first_name VARCHAR(80) NOT NULL,
+    last_name VARCHAR(80) NOT NULL,
+    valid_from DATETIME NOT NULL DEFAULT NOW(),
+    valid_to DATETIME NOT NULL DEFAULT '9999-12-31 00:00:00'
+);
+
+/* inserting info in customer dimension table */
+
+INSERT INTO dim_customers(customer_id, company, first_name, last_name)
+SELECT CustomerId, Company, FirstName, LastName
+FROM MyTunes.Customer;
+
+/* creating album dimension */
+
+CREATE TABLE IF NOT EXISTS dim_album(
+	album_key INT auto_increment PRIMARY KEY,
+    album_id INT NOT NULL,
+    album VARCHAR(500) NOT NULL,
+    artist VARCHAR(500) NOT NULL,
+    valid_from DATETIME NOT NULL DEFAULT NOW(),
+    valid_to DATETIME NOT NULL DEFAULT '9999-12-31 00:00:00'
+);
+
+/* inserting info in album dimension table */
+
+INSERT INTO dim_album(album_id, album, artist)
+SELECT AlbumId, Title, Name
+FROM MyTunes.Album al INNER JOIN MyTunes.Artist ar
+	ON al.ArtistId = ar.ArtistId
+GROUP BY AlbumId;
+
+
+/* creating time dimension */
+
+CREATE TABLE IF NOT EXISTS dim_time(
+	time_key INT auto_increment PRIMARY KEY,
+    year INT NOT NULL,
+    month INT NOT NULL,
+    quarter INT NOT NULL,
+    day INT NOT NULL,
+    day_of_week INT NOT NULL 
+);
+
+/* inserting info in time dimension table */
+
+
+
+/* creating invoice dimension */
+
+CREATE TABLE IF NOT EXISTS dim_invoice(
+	invoice_key INT auto_increment PRIMARY KEY,
+    invoice_id INT NOT NULL,
+    billing_country VARCHAR(80) NOT NULL
+);
+
+/* inserting info in invoice dimension table */
