@@ -89,6 +89,7 @@ CREATE TABLE IF NOT EXISTS dim_fact(
 		FOREIGN KEY (time_key) REFERENCES dim_time(time_key),
 		FOREIGN KEY (invoice_key) REFERENCES dim_invoice(invoice_key)
 );
+/*query with sales per artist*/
 
 With sales_per_artist as (
 With sales_per_album as (
