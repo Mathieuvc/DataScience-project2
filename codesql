@@ -65,6 +65,8 @@ CREATE TABLE IF NOT EXISTS dim_invoice(
 	invoice_key INT auto_increment PRIMARY KEY,
     invoice_id INT NOT NULL,
     billing_country VARCHAR(80) NOT NULL
+    valid_from DATETIME NOT NULL DEFAULT NOW(),
+    valid_to DATETIME NOT NULL DEFAULT '9999-12-31 00:00:00'
 );
 
 /* inserting info in invoice dimension table */
