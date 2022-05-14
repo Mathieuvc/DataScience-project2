@@ -42,6 +42,7 @@ FROM MyTunes.Artist ar INNER JOIN
 		ON tr.AlbumId = al.AlbumId) t
 	ON ar.ArtistId = t.ArtistId;
 
+
 /* creating time dimension */
 
 CREATE TABLE IF NOT EXISTS dim_time(
@@ -64,7 +65,7 @@ from MyTunes.invoice;
 CREATE TABLE IF NOT EXISTS dim_invoice(
 	invoice_key INT auto_increment PRIMARY KEY,
     invoice_id INT NOT NULL,
-    billing_country VARCHAR(80) NOT NULL
+    billing_country VARCHAR(80) NOT NULL,
     valid_from DATETIME NOT NULL DEFAULT NOW(),
     valid_to DATETIME NOT NULL DEFAULT '9999-12-31 00:00:00'
 );
@@ -78,14 +79,13 @@ FROM MyTunes.invoice;
 /* create the fact table of our star schema */
 
 CREATE TABLE IF NOT EXISTS dim_fact( 
-	fact_key INT auto_increment PRIMARY KEY,
     customer_key INT NOT NULL,
     track_key INT NOT NULL,
     time_key  INT NOT NULL,
     invoice_key INT NOT NULL, 
-    sales_amount FLOAT NOT NULL,
   	
     	FOREIGN KEY (customer_key) REFERENCES dim_customers(customer_key),
     	FOREIGN KEY (track_key) REFERENCES dim_track(track_key),
-	FOREIGN KEY (time_key) REFERENCES dim_time(time_key),
-	FOREIGN KEY (invoice_key) REFERENCES dim_invoice(invoice_key));
+		FOREIGN KEY (time_key) REFERENCES dim_time(time_key),
+		FOREIGN KEY (invoice_key) REFERENCES dim_invoice(invoice_key)
+);
