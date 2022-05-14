@@ -55,7 +55,9 @@ CREATE TABLE IF NOT EXISTS dim_time(
 
 /* inserting info in time dimension table */
 
-
+INSERT INTO dim_time(year, month, quarter, day, day_of_week)
+select distinct year(InvoiceDate), month(InvoiceDate), quarter(InvoiceDate), dayofmonth(InvoiceDate), dayofweek(InvoiceDate)
+from MyTunes.invoice;
 
 /* creating invoice dimension */
 
