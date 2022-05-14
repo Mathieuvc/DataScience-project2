@@ -22,8 +22,6 @@ INSERT INTO dim_customers(customer_id, company, first_name, last_name)
 SELECT CustomerId, Company, FirstName, LastName
 FROM MyTunes.Customer;
 
-/* creating track dimension */
-
 CREATE TABLE IF NOT EXISTS dim_track(
 	track_key INT auto_increment PRIMARY KEY,
     track_id INT NOT NULL,
@@ -77,4 +75,14 @@ FROM MyTunes.invoice;
 
 /* create the fact table of our star schema */
 
-
+CREATE TABLE IF NOT EXISTS dim_fact(
+	fact_key INT auto_increment PRIMARY KEY, 
+    customer_key INT NOT NULL,
+    track_key INT NOT NULL,
+    time_key  INT NOT NULL,
+    invoice_key INT NOT NULL, 
+  	
+    	FOREIGN KEY (customer_key) REFERENCES dim_customers(customer_key),
+    	FOREIGN KEY (track_key) REFERENCES dim_track(track_key),
+	FOREIGN KEY (time_key) REFERENCES dim_time(time_key),
+	FOREIGN KEY (invoice_key) REFERENCES dim_invoice(invoice_key),
