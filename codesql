@@ -146,3 +146,36 @@ UPDATE dim_customers SET valid_to = NOW() WHERE customer_key IN
     FROM tmp_customers_changed); 
     
     DROP TABLE tmp_customers_changed; 
+
+/* create staging table for track*/ 
+
+CREATE TABLE stg_track(
+SELECT * FROM MyTunes.track);
+
+/* create temporary table for track*/ 
+
+CREATE TEMPORARY TABLE tmp_tracks_changed 
+SELECT dt.track_key
+FROM dim_track dt
+INNER JOIN stg_track st 
+ON dt.track_id = st.TrackId
+WHERE (dt.name <> st.name OR dt.album <> st.album OR dt.artist <> st.artist)
+	AND dt.valid_to = '9999-12-31 00:00:00';
+
+/* Identify the tracks from the staging that were added */
+
+INSERT INTO dim_tracks( track_id, name, album, artist) 
+SELECT st.TrackId, st.name, st.album, st.artist
+FROM stg_track st 
+LEFT JOIN dim_track dt
+ON dt.track_id = st.TrackId
+WHERE (dt.name <> st.name OR dt.album <> st.album OR dt.artist <> st.artist)
+	AND (dt.valid_to = '9999-12-31 00:00:00' OR dt.valid_to IS NULL);
+
+/* Change the valid date for the changed tracks*/ 
+
+UPDATE dim_track SET valid_to = NOW() WHERE track_key IN 
+	(SELECT track_key
+    FROM tmp_tracks_changed); 
+    
+    DROP TABLE tmp_customers_changed; 
