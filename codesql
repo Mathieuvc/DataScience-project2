@@ -22,6 +22,8 @@ INSERT INTO dim_customers(customer_id, company, first_name, last_name)
 SELECT CustomerId, Company, FirstName, LastName
 FROM MyTunes.Customer;
 
+/* creating track dimension */
+
 CREATE TABLE IF NOT EXISTS dim_track(
 	track_key INT auto_increment PRIMARY KEY,
     track_id INT NOT NULL,
