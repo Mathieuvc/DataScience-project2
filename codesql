@@ -113,3 +113,36 @@ FROM
         AND trd.track_id = def.TrackId AND trd.valid_to = '9999-12-31 00:00:00'
 );
 
+/* 2nd PART */
+
+
+/* Create staging table for customers*/ 
+
+CREATE TABLE stg_customers(
+SELECT * FROM MyTunes.customer );
+
+CREATE TEMPORARY TABLE tmp_customers_changed 
+SELECT dc.customer_key
+FROM dim_customers dc
+INNER JOIN stg_customers sc 
+ON dc.customer_id = sc.CustomerId
+WHERE (dc.company <> sc.company OR dc.last_name <> sc.lastname OR dc.first_name <> sc.firstname)
+	AND dc.valid_to = '9999-12-31 00:00:00';
+
+/* Identify the cutomers from the staging that were added */
+
+INSERT INTO dim_customers( customer_id, company, first_name, last_name) 
+SELECT sc.CustomerId, sc.company, sc.LastName, sc.FirstName
+FROM stg_customers sc 
+LEFT JOIN dim_customers dc
+ON dc.customer_id = sc.CustomerId
+WHERE (dc.company <> sc.company OR dc.last_name <> sc.lastname OR dc.first_name <> sc.firstname)
+	AND (dc.valid_to = '9999-12-31 00:00:00' OR dc.valid_to IS NULL);
+
+/* Channge the valid date */ 
+
+UPDATE dim_customers SET valid_to = NOW() WHERE customer_key IN 
+	(SELECT customer_key
+    FROM tmp_customers_changed); 
+    
+    DROP TABLE tmp_customers_changed; 
