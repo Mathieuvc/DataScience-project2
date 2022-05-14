@@ -78,27 +78,38 @@ FROM MyTunes.invoice;
 
 /* create the fact table of our star schema */
 
-CREATE TABLE IF NOT EXISTS dim_fact( 
+CREATE TABLE IF NOT EXISTS fct_order_value( 
     customer_key INT NOT NULL,
     track_key INT NOT NULL,
     time_key  INT NOT NULL,
     invoice_key INT NOT NULL, 
-    total_amount FLOAT NOT NULL,
-  	
+  	order_value FLOAT NOT NULL,
+    
     	FOREIGN KEY (customer_key) REFERENCES dim_customers(customer_key),
     	FOREIGN KEY (track_key) REFERENCES dim_track(track_key),
 		FOREIGN KEY (time_key) REFERENCES dim_time(time_key),
 		FOREIGN KEY (invoice_key) REFERENCES dim_invoice(invoice_key)
-        );
+);
 
-INSERT INTO mytunes_dim.dim_fact(customer_key,track_key,time_key,invoice_key, total_amount)
-WITH sales_per_invoiceline as (
-SELECT ili.invoicelineid, inv.customerid, year(inv.invoicedate) as year, month(inv.invoicedate) as month, dayofmonth(inv.invoicedate) as day, sum(ili.quantity * ili.unitprice) as total_amount, ili.trackid, inv.invoiceid
-FROM MyTunes.invoice inv INNER JOIN MyTunes.invoiceline ili on inv.invoiceid = ili.invoiceid
-group by ili.invoicelineid)
-SELECT dc.customer_key, dtr.track_key, dt.time_key, di.invoice_key, spi.total_amount
-FROM sales_per_invoiceline spi INNER JOIN dim_customers dc INNER JOIN dim_invoice di INNER JOIN dim_track dtr INNER JOIN dim_time dt
-ON (dc.customer_id = spi.customerid AND di.invoice_id = spi.invoiceid AND dtr.track_id = spi.trackid AND dt.year = spi.year AND dt.month = spi.month and dt.day = spi.day)
-;
+/* insert the values of the keys in fact table and total amount ordered in fact table*/
 
+INSERT INTO fct_order_value(customer_key, track_key, time_key, invoice_key, order_value)	
+SELECT cd.customer_key, trd.track_key, tid.time_key, di.invoice_key, def.total_amount
+FROM 
+    (SELECT i.CustomerId, year(i.InvoiceDate) as year, quarter(i.InvoiceDate) as quarter, month(i.InvoiceDate) as month, dayofmonth(i.InvoiceDate) as day, dayofweek(i.InvoiceDate) as day_of_week,	
+			i.BillingCountry, i.InvoiceId, abc.TrackId, abc.total_amount
+	FROM MyTunes.Invoice i INNER JOIN 
+		(SELECT invoiceId, il.TrackId,il.UnitPrice*il.Quantity as total_amount
+			FROM MyTunes.InvoiceLine il INNER JOIN MyTunes.Track tr 
+			ON tr.TrackID = il.TrackID) abc
+		ON i.InvoiceId = abc.InvoiceId) def
+	INNER JOIN dim_customers cd
+    INNER JOIN dim_time tid
+    INNER JOIN dim_invoice di
+    INNER JOIN dim_track trd
+	ON (cd.customer_id = def.CustomerID AND cd.valid_to = '9999-12-31 00:00:00' 
+		AND tid.year = def.year AND tid.quarter = def.quarter AND tid.month = def.month AND tid.day = def.day AND tid.day_of_week = def.day_of_week
+        AND di.invoice_id = def.InvoiceId AND di.valid_to = '9999-12-31 00:00:00'
+        AND trd.track_id = def.TrackId AND trd.valid_to = '9999-12-31 00:00:00'
+);
 
