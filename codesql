@@ -86,4 +86,4 @@ CREATE TABLE IF NOT EXISTS dim_fact(
     	FOREIGN KEY (customer_key) REFERENCES dim_customers(customer_key),
     	FOREIGN KEY (track_key) REFERENCES dim_track(track_key),
 	FOREIGN KEY (time_key) REFERENCES dim_time(time_key),
-	FOREIGN KEY (invoice_key) REFERENCES dim_invoice(invoice_key),
+	FOREIGN KEY (invoice_key) REFERENCES dim_invoice(invoice_key));
