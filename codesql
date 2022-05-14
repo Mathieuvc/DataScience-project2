@@ -35,10 +35,12 @@ CREATE TABLE IF NOT EXISTS dim_track(
 /* inserting info in track dimension table */
 
 INSERT INTO dim_track(track_id, name, album, artist)
-SELECT TrackId, Name, tr.AlbumId, al.ArtistId
-FROM MyTunes.Track tr INNER JOIN MyTunes.Album al
-	ON tr.AlbumId = al.AlbumId 
-GROUP BY ArtistId;
+SELECT t.TrackId, t.Name, t.Title, ar.Name
+FROM MyTunes.Artist ar INNER JOIN 
+	(SELECT TrackId, Name, Title, ArtistId, tr.AlbumId
+	FROM MyTunes.Track tr INNER JOIN MyTunes.Album al
+		ON tr.AlbumId = al.AlbumId) t
+	ON ar.ArtistId = t.ArtistId;
 
 /* creating time dimension */
 
