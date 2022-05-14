@@ -89,27 +89,10 @@ CREATE TABLE IF NOT EXISTS dim_fact(
 		FOREIGN KEY (time_key) REFERENCES dim_time(time_key),
 		FOREIGN KEY (invoice_key) REFERENCES dim_invoice(invoice_key)
 );
-/*query with sales per artist*/
 
-With sales_per_artist as (
-With sales_per_album as (
- SELECT sum(il.unitprice* il.quantity) as Sales, tr.albumid
+/* sales per track */
+
+SELECT sum(il.unitprice* il.quantity) as Sales, tr.trackid
 		FROM MyTunes.invoiceline il INNER JOIN MyTunes.track tr
 		ON il.trackid = tr.trackid
-		group by albumid)
-SELECT sum(sales) as sales , al.artistid
-FROM 
-	sales_per_album sa LEFT JOIN MyTunes.album al
-        on sa.albumid = al.albumid
-	group by artistid)    
-SELECT sar.sales, a.name 
-FROM sales_per_artist sar LEFT JOIN MyTunes.artist a
-	ON sar.artistid = a.artistid;
-
-/* sales per album */
-SELECT sum(il.unitprice* il.quantity) as Sales, tr.albumid
-FROM MyTunes.invoiceline il INNER JOIN MyTunes.track tr
-	ON il.trackid = tr.trackid
-    group by tr.albumid;
-
-
+		group by trackid
