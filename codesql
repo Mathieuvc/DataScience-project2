@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS dim_track(
     valid_to DATETIME NOT NULL DEFAULT '9999-12-31 00:00:00'
 );
 
-/* inserting info in album dimension table */
+/* inserting info in track dimension table */
 
 INSERT INTO dim_track(track_id, name, album, artist)
 SELECT TrackId, Name, tr.AlbumId, al.ArtistId
