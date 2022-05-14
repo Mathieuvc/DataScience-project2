@@ -76,10 +76,12 @@ FROM MyTunes.invoice;
 /* create the fact table of our star schema */
 
 CREATE TABLE IF NOT EXISTS dim_fact( 
+	fact_key INT auto_increment PRIMARY KEY,
     customer_key INT NOT NULL,
     track_key INT NOT NULL,
     time_key  INT NOT NULL,
     invoice_key INT NOT NULL, 
+    sales_amount FLOAT NOT NULL,
   	
     	FOREIGN KEY (customer_key) REFERENCES dim_customers(customer_key),
     	FOREIGN KEY (track_key) REFERENCES dim_track(track_key),
