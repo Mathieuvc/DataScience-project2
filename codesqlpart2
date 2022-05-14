@@ -36,7 +36,7 @@ UPDATE dim_customers SET valid_to = NOW() WHERE customer_key IN
 /* create staging table for track*/ 
 
 CREATE TABLE stg_track(
-SELECT t.TrackId, ar.Name, t.AlbumId, ar.ArtistId
+SELECT t.TrackId, t.Name, t.AlbumId, ar.ArtistId
 FROM MyTunes.Artist ar INNER JOIN 
 	(SELECT TrackId, Name, Title, ArtistId, tr.AlbumId
 	FROM MyTunes.Track tr INNER JOIN MyTunes.Album al
