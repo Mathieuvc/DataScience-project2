@@ -36,12 +36,13 @@ UPDATE dim_customers SET valid_to = NOW() WHERE customer_key IN
 /* create staging table for track*/ 
 
 CREATE TABLE stg_track(
-SELECT t.TrackId, t.Name, t.AlbumId, ar.ArtistId
+SELECT t.TrackId, t.Name as Trackname, t.title , ar.Name as Artist
 FROM MyTunes.Artist ar INNER JOIN 
 	(SELECT TrackId, Name, Title, ArtistId, tr.AlbumId
 	FROM MyTunes.Track tr INNER JOIN MyTunes.Album al
 		ON tr.AlbumId = al.AlbumId) t
 	ON ar.ArtistId = t.ArtistId);
+
 
 /* create temporary table for track*/ 
 
@@ -50,17 +51,17 @@ SELECT dt.track_key
 FROM dim_track dt
 INNER JOIN stg_track st 
 ON dt.track_id = st.TrackId
-WHERE (dt.name <> st.name OR dt.album <> st.AlbumId OR dt.artist <> st.ArtistId)
+WHERE (dt.name <> st.trackname OR dt.album <> st.title OR dt.artist <> st.artist)
 	AND dt.valid_to = '9999-12-31 00:00:00';
 
-/* Identify the tracks from the staging that were added */
 
+/* Identify the tracks from the staging that were added */
 INSERT INTO dim_track( track_id, name, album, artist) 
-SELECT st.TrackId, st.name, st.AlbumId, st.ArtistId
+SELECT st.TrackId, st.trackname, st.title, st.artist
 FROM stg_track st 
 LEFT JOIN dim_track dt
 ON dt.track_id = st.TrackId
-WHERE (dt.name <> st.name OR dt.album <> st.AlbumId OR dt.artist <> st.ArtistId)
+WHERE (dt.name <> st.trackname OR dt.album <> st.title OR dt.artist <> st.artist)
 	AND (dt.valid_to = '9999-12-31 00:00:00' OR dt.valid_to IS NULL);
 
 /* Change the valid date for the changed tracks*/ 
