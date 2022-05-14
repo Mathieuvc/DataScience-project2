@@ -83,16 +83,22 @@ CREATE TABLE IF NOT EXISTS dim_fact(
     track_key INT NOT NULL,
     time_key  INT NOT NULL,
     invoice_key INT NOT NULL, 
+    total_amount FLOAT NOT NULL,
   	
     	FOREIGN KEY (customer_key) REFERENCES dim_customers(customer_key),
     	FOREIGN KEY (track_key) REFERENCES dim_track(track_key),
 		FOREIGN KEY (time_key) REFERENCES dim_time(time_key),
 		FOREIGN KEY (invoice_key) REFERENCES dim_invoice(invoice_key)
-);
+        );
 
-/* sales per track */
+INSERT INTO mytunes_dim.dim_fact(customer_key,track_key,time_key,invoice_key, total_amount)
+WITH sales_per_invoiceline as (
+SELECT ili.invoicelineid, inv.customerid, year(inv.invoicedate) as year, month(inv.invoicedate) as month, dayofmonth(inv.invoicedate) as day, sum(ili.quantity * ili.unitprice) as total_amount, ili.trackid, inv.invoiceid
+FROM MyTunes.invoice inv INNER JOIN MyTunes.invoiceline ili on inv.invoiceid = ili.invoiceid
+group by ili.invoicelineid)
+SELECT dc.customer_key, dtr.track_key, dt.time_key, di.invoice_key, spi.total_amount
+FROM sales_per_invoiceline spi INNER JOIN dim_customers dc INNER JOIN dim_invoice di INNER JOIN dim_track dtr INNER JOIN dim_time dt
+ON (dc.customer_id = spi.customerid AND di.invoice_id = spi.invoiceid AND dtr.track_id = spi.trackid AND dt.year = spi.year AND dt.month = spi.month and dt.day = spi.day)
+;
 
-SELECT sum(il.unitprice* il.quantity) as Sales, tr.trackid
-		FROM MyTunes.invoiceline il INNER JOIN MyTunes.track tr
-		ON il.trackid = tr.trackid
-		group by trackid
+
