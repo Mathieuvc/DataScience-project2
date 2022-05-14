@@ -70,4 +70,5 @@ UPDATE dim_track SET valid_to = NOW() WHERE track_key IN
 	(SELECT track_key
     FROM tmp_tracks_changed); 
     
-    DROP TABLE tmp_customers_changed; 
+    DROP TABLE tmp_customers_changed;
+    DROP TABLE tmp_tracks_changed 
