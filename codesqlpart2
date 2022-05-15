@@ -90,9 +90,9 @@ CREATE TEMPORARY TABLE tmp_time_changed
 SELECT dc.time_key
 FROM dim_time dt
 LEFT JOIN stg_time st ON year(InvioceDate) = st.year 
-							AND month(InvoiceDate) = st.month
-                            AND quarter(InvoiceDate) = st.quarter
-                            AND dayofmonth(InvoiceDate) = st.dayofmonth
+				AND month(InvoiceDate) = st.month
+                           	AND quarter(InvoiceDate) = st.quarter
+                            	AND dayofmonth(InvoiceDate) = st.dayofmonth
 WHERE dt.day_of_week IS NULL;
 
 INSERT INTO dim_time(year, month, quarter, day_of_month, day_of_week)
