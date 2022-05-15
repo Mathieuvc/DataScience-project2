@@ -2,8 +2,6 @@
 
 USE mytunes_dim;
 
-DROP TABLE tmp_customers_changed;
-
 /* Create staging table for customers*/ 
 
 CREATE TABLE stg_customers(
@@ -36,8 +34,6 @@ UPDATE dim_customers SET valid_to = NOW() WHERE customer_key IN
     FROM tmp_customers_changed); 
  
 DROP TABLE tmp_customers_changed; 
-
-DROP TABLE tmp_tracks_changed; 
 
 /* create staging table for track*/ 
 
@@ -77,8 +73,6 @@ UPDATE dim_track SET valid_to = NOW() WHERE track_key IN
     
 DROP TABLE tmp_tracks_changed; 
 
-DROP TABLE tmp_invoice_changed;
-
 /* create staging table for invoice */
 CREATE TABLE stg_invoice(
 SELECT * FROM MyTunes.Invoice
@@ -108,8 +102,6 @@ UPDATE dim_invoice SET valid_to = NOW() WHERE invoice_key IN
     FROM tmp_invoice_changed); 
 
 DROP TABLE tmp_invoice_changed;
-
-DROP TABLE tmp_time_changed;
 
 /* Update the time dimension */  
 DROP TABLE tmp_time_changed;
