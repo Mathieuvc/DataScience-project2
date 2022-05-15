@@ -12,14 +12,19 @@ CREATE TABLE IF NOT EXISTS dim_customers(
     company VARCHAR(80),
     first_name VARCHAR(80) NOT NULL,
     last_name VARCHAR(80) NOT NULL,
+    address VARCHAR(200) NOT NULL, 
+	city VARCHAR(80) NOT NULL, 
+    state VARCHAR(80) NOT NULL, 
+    postcode VARCHAR(10) NOT NULL, 
+    email VARCHAR(60) NOT NULL, 
     valid_from DATETIME NOT NULL DEFAULT NOW(),
     valid_to DATETIME NOT NULL DEFAULT '9999-12-31 00:00:00'
 );
 
 /* inserting info in customer dimension table */
 
-INSERT INTO dim_customers(customer_id, company, first_name, last_name)
-SELECT CustomerId, Company, FirstName, LastName
+INSERT INTO dim_customers(customer_id, company, first_name, last_name, address, city, state, postcode, email)
+SELECT CustomerId, Company, FirstName, LastName, Address, City, State, Postcode, Email
 FROM MyTunes.Customer;
 
 /* creating track dimension */
