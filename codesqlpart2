@@ -75,3 +75,28 @@ UPDATE dim_track SET valid_to = NOW() WHERE track_key IN
     
     DROP TABLE tmp_customers_changed;
     DROP TABLE tmp_tracks_changed 
+  
+  
+  
+/* Create staging table for time*/ 
+
+CREATE TABLE stg_time(
+select distinct year(InvoiceDate), month(InvoiceDate), quarter(InvoiceDate), dayofmonth(InvoiceDate), dayofweek(InvoiceDate)
+FROM MyTunes.invoice);
+
+/* create temporary table for customer*/ 
+
+CREATE TEMPORARY TABLE tmp_time_changed 
+SELECT dc.time_key
+FROM dim_time dt
+LEFT JOIN stg_time st ON year(InvioceDate) = st.year 
+							AND month(InvoiceDate) = st.month
+                            AND quarter(InvoiceDate) = st.quarter
+                            AND dayofmonth(InvoiceDate) = st.dayofmonth
+WHERE dt.day_of_week IS NULL;
+
+INSERT INTO dim_time(year, month, quarter, day_of_month, day_of_week)
+SELECT *
+FROM tmp_time_changed;
+
+DROP TABLE tmp_time_changed;
