@@ -38,9 +38,9 @@ DROP TABLE tmp_customers_changed;
 /* create staging table for track*/ 
 
 CREATE TABLE stg_track(
-SELECT t.TrackId as track_id, t.Name as track_name, t.title as album_name , ar.Name as artist_name
+SELECT t.TrackId as track_id, t.Name as track_name, t.album_id as album_id, t.title as album_name , t.artistid as artist_id, ar.Name as artist_name, t.unitprice as unit_price
 FROM MyTunes.Artist ar INNER JOIN 
-	(SELECT TrackId, Name, Title, ArtistId, tr.AlbumId
+	(SELECT TrackId, Name, Title, ArtistId, tr.AlbumId, tr.unitprice
 	FROM MyTunes.Track tr INNER JOIN MyTunes.Album al
 		ON tr.AlbumId = al.AlbumId) t
 	ON ar.ArtistId = t.ArtistId);
@@ -52,17 +52,17 @@ SELECT dt.track_key
 FROM dim_track dt
 INNER JOIN stg_track st 
 ON dt.track_id = st.Track_Id
-WHERE (dt.track_name <> st.track_name OR dt.album_name <> st.album_name OR dt.artist_name <> st.artist_name)
+WHERE (dt.track_name <> st.track_name OR dt.album_id <> st.album_id OR dt.album_name <> st.album_name OR dt.artist_id <> st.artist_id OR dt.artist_name <> st.artist_name OR dt.unit_price <> st.unit_price)
 	AND dt.valid_to = '9999-12-31 00:00:00';
 
 /* Identify the tracks from the staging that were added */
 
-INSERT INTO dim_track(track_id, track_name, album_name, artist_name)
-SELECT st.Track_Id, st.track_name, st.album_name, st.artist_name
+INSERT INTO dim_track(track_id, track_name, album_id, album_name, artist_id, artist_name, unit_price)
+SELECT st.Track_Id, st.track_name, st.album_id, st.album_name, st.artist_id, st.artist_name, st.unit_price
 FROM stg_track st 
 LEFT JOIN dim_track dt
 ON dt.track_id = st.Track_Id
-WHERE (dt.track_name <> st.track_name OR dt.album_name <> st.album_name OR dt.artist_name <> st.artist_name)
+WHERE (dt.track_name <> st.track_name OR dt.album_id <> st.album_id OR dt.album_name <> st.album_name OR dt.artist_id <> st.artist_id OR dt.artist_name <> st.artist_name OR dt.unit_price <> st.unit_price)
 	AND (dt.valid_to = '9999-12-31 00:00:00' OR dt.valid_to IS NULL);
 
 /* Change the valid date for the changed tracks*/ 
