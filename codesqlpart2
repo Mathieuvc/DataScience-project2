@@ -14,17 +14,17 @@ SELECT dc.customer_key
 FROM dim_customers dc
 INNER JOIN stg_customers sc 
 ON dc.customer_id = sc.CustomerId
-WHERE (dc.company <> sc.company OR dc.last_name <> sc.lastname OR dc.first_name <> sc.firstname)
+WHERE (dc.company <> sc.company OR dc.last_name <> sc.lastname OR dc.first_name <> sc.firstname OR dc.address <> sc.address OR dc.city <> sc.city OR dc.state <> sc.state OR dc.postalcode <> sc.postalcode OR dc.email <> sc.email)
 	AND dc.valid_to = '9999-12-31 00:00:00';
 
 /* Identify the cutomers from the staging that were added */
 
-INSERT INTO dim_customers( customer_id, company, first_name, last_name) 
-SELECT sc.CustomerId, sc.company, sc.LastName, sc.FirstName
+INSERT INTO dim_customers(customer_id, company, first_name, last_name, address, city, state, postalcode, email)
+SELECT sc.CustomerId, sc.company, sc.FirstName, sc.LastName, sc.Address, sc.City, sc.State, sc.postalcode, sc.Email
 FROM stg_customers sc 
 LEFT JOIN dim_customers dc
 ON dc.customer_id = sc.CustomerId
-WHERE (dc.company <> sc.company OR dc.last_name <> sc.lastname OR dc.first_name <> sc.firstname)
+WHERE (dc.company <> sc.company OR dc.last_name <> sc.lastname OR dc.first_name <> sc.firstname OR dc.address <> sc.address OR dc.city <> sc.city OR dc.state <> sc.state OR dc.postalcode <> sc.postalcode OR dc.email <> sc.email)
 	AND (dc.valid_to = '9999-12-31 00:00:00' OR dc.valid_to IS NULL);
 
 /* Change the valid date */ 
@@ -85,16 +85,16 @@ SELECT di.invoice_key
 FROM dim_invoice di
 INNER JOIN stg_invoice si
 ON di.invoice_id = si.invoiceid
-WHERE (di.billing_country <> si.BillingCountry)
+WHERE (di.billing_country <> si.BillingCountry OR di.billing_state <> si.Billingstate OR di.billing_city <> si.Billingcity OR di.billing_address <> si.Billingaddress OR di.billing_postal_code <> si.Billingpostalcode OR di.total <> si.total)
 	AND di.valid_to = '9999-12-31 00:00:00';
 
 /* Identify the invoices from the staging that were added */
-INSERT INTO dim_invoice(invoice_id, billing_country)
-SELECT si.invoiceid, si.billingcountry
+INSERT INTO dim_invoice(invoice_id, billing_country, billing_state, billing_city, billing_address, billing_postal_code, total)
+SELECT si.InvoiceId, si.BillingCountry, si.BillingState, si.Billingcity, si.Billingaddress, si.Billingpostalcode, si.Total
 FROM stg_invoice si 
 LEFT JOIN dim_invoice di
 ON di.invoice_id = si.invoiceid
-WHERE (di.billing_country <> si.BillingCountry)
+WHERE (di.billing_country <> si.BillingCountry OR di.billing_state <> si.Billingstate OR di.billing_city <> si.Billingcity OR di.billing_address <> si.Billingaddress OR di.billing_postal_code <> si.Billingpostalcode OR di.total <> si.total)
 	AND (di.valid_to = '9999-12-31 00:00:00' OR di.valid_to IS NULL);
     
 /* Change the valid date for the changed invoices */ 
