@@ -69,21 +69,25 @@ INSERT INTO dim_time(year, month, quarter, day, day_of_week)
 select distinct year(InvoiceDate), month(InvoiceDate), quarter(InvoiceDate), dayofmonth(InvoiceDate), dayofweek(InvoiceDate)
 from MyTunes.invoice;
 
-/* creating invoice dimension */
-
 CREATE TABLE IF NOT EXISTS dim_invoice(
 	invoice_key INT auto_increment PRIMARY KEY,
     invoice_id INT NOT NULL,
     billing_country VARCHAR(80) NOT NULL,
+    billing_state VARCHAR(80) NOT NULL,
+    billing_city VARCHAR(80) NOT NULL,
+    billing_address VARCHAR(100) NOT NULL,
+    billing_postal_code VARCHAR(80) NOT NULL, 
+    Total decimal (10,2),
     valid_from DATETIME NOT NULL DEFAULT NOW(),
     valid_to DATETIME NOT NULL DEFAULT '9999-12-31 00:00:00'
 );
 
 /* inserting info in invoice dimension table */
 
-INSERT INTO dim_invoice(invoice_id, billing_country)
-SELECT InvoiceId, BillingCountry
+INSERT INTO dim_invoice(invoice_id, billing_country, billing_state, billing_city, billing_address, billing_postal_code, total)
+SELECT InvoiceId, BillingCountry, BillingState, Billingcity, Billingaddress, Billingpostalcode, Total
 FROM MyTunes.invoice;
+
 
 /* create the fact table of our star schema */
 
