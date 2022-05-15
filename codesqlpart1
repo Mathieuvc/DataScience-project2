@@ -33,18 +33,21 @@ CREATE TABLE IF NOT EXISTS dim_track(
 	track_key INT auto_increment PRIMARY KEY,
     track_id INT NOT NULL,
     track_name VARCHAR(500) NOT NULL,
+    album_id INT, 
     album_name VARCHAR(500) NOT NULL,
+    artist_id INT,
     artist_name VARCHAR(500) NOT NULL,
+    unit_price DECIMAL(10,2), 
     valid_from DATETIME NOT NULL DEFAULT NOW(),
     valid_to DATETIME NOT NULL DEFAULT '9999-12-31 00:00:00'
 );
 
 /* inserting info in track dimension table */
 
-INSERT INTO dim_track(track_id, track_name, album_name, artist_name)
-SELECT t.TrackId, t.Name, t.Title, ar.Name
+INSERT INTO dim_track(track_id, track_name, album_id, album_name, artist_id, artist_name, unit_price)
+SELECT t.TrackId, t.Name,t.albumid, t.Title, ar.artistid, ar.Name, t.unitprice
 FROM MyTunes.Artist ar INNER JOIN 
-	(SELECT TrackId, Name, Title, ArtistId, tr.AlbumId
+	(SELECT TrackId, Name, Title, ArtistId, tr.AlbumId, tr.unitprice
 	FROM MyTunes.Track tr INNER JOIN MyTunes.Album al
 		ON tr.AlbumId = al.AlbumId) t
 	ON ar.ArtistId = t.ArtistId;
