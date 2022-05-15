@@ -27,7 +27,7 @@ FROM MyTunes.Customer;
 CREATE TABLE IF NOT EXISTS dim_track(
 	track_key INT auto_increment PRIMARY KEY,
     track_id INT NOT NULL,
-    song_name VARCHAR(500) NOT NULL,
+    track_name VARCHAR(500) NOT NULL,
     album_name VARCHAR(500) NOT NULL,
     artist_name VARCHAR(500) NOT NULL,
     valid_from DATETIME NOT NULL DEFAULT NOW(),
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS dim_track(
 
 /* inserting info in track dimension table */
 
-INSERT INTO dim_track(track_id, song_name, album_name, artist_name)
+INSERT INTO dim_track(track_id, track_name, album_name, artist_name)
 SELECT t.TrackId, t.Name, t.Title, ar.Name
 FROM MyTunes.Artist ar INNER JOIN 
 	(SELECT TrackId, Name, Title, ArtistId, tr.AlbumId
