@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS dim_customers(
     address VARCHAR(200) NOT NULL, 
 	city VARCHAR(80) NOT NULL, 
     state VARCHAR(80) NOT NULL, 
-    postcode VARCHAR(10) NOT NULL, 
+    postalcode VARCHAR(10) NOT NULL, 
     email VARCHAR(60) NOT NULL, 
     valid_from DATETIME NOT NULL DEFAULT NOW(),
     valid_to DATETIME NOT NULL DEFAULT '9999-12-31 00:00:00'
@@ -23,8 +23,8 @@ CREATE TABLE IF NOT EXISTS dim_customers(
 
 /* inserting info in customer dimension table */
 
-INSERT INTO dim_customers(customer_id, company, first_name, last_name, address, city, state, postcode, email)
-SELECT CustomerId, Company, FirstName, LastName, Address, City, State, Postcode, Email
+INSERT INTO dim_customers(customer_id, company, first_name, last_name, address, city, state, postalcode, email)
+SELECT CustomerId, Company, FirstName, LastName, Address, City, State, Postalcode, Email
 FROM MyTunes.Customer;
 
 /* creating track dimension */
@@ -33,9 +33,9 @@ CREATE TABLE IF NOT EXISTS dim_track(
 	track_key INT auto_increment PRIMARY KEY,
     track_id INT NOT NULL,
     track_name VARCHAR(500) NOT NULL,
-    album_id INT, 
+    album_id INT NOT NULL, 
     album_name VARCHAR(500) NOT NULL,
-    artist_id INT,
+    artist_id INT NOT NULL,
     artist_name VARCHAR(500) NOT NULL,
     unit_price DECIMAL(10,2), 
     valid_from DATETIME NOT NULL DEFAULT NOW(),
