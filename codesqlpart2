@@ -117,3 +117,37 @@ SELECT *
 FROM tmp_time_changed; 
 
 DROP TABLE tmp_time_changed;
+
+/* create staging table for InvoiceLine */
+
+CREATE TABLE stg_InvoiceLine(
+SELECT * FROM MyTunes.InvoiceLine);
+
+/* create staging table for Invoice */
+
+CREATE TABLE stg_Invoice(
+SELECT * FROM MyTunes.Invoice);
+
+/* Update fact */ 
+
+INSERT INTO fct_order_value(customer_key, track_key, time_key, invoice_key, order_value)	
+
+SELECT cd.customer_key, trd.track_key, tid.time_key, di.invoice_key, def.total_amount
+FROM 
+    (SELECT i.CustomerId, year(i.InvoiceDate) as year, quarter(i.InvoiceDate) as quarter, month(i.InvoiceDate) as month, dayofmonth(i.InvoiceDate) as day, dayofweek(i.InvoiceDate) as day_of_week,	
+			i.BillingCountry, i.InvoiceId, abc.TrackId, abc.total_amount
+	FROM stg_invoice i INNER JOIN 
+		(SELECT invoiceId, il.TrackId,il.UnitPrice*il.Quantity as total_amount
+			FROM stg_InvoiceLine il INNER JOIN stg_Track tr 
+			ON tr.Track_Id = il.TrackID) abc
+		ON i.InvoiceId = abc.InvoiceId
+        WHERE i.invoicedate > "2022-05-14 00:00:00") def
+	INNER JOIN dim_customers cd
+    INNER JOIN dim_time tid
+    INNER JOIN dim_invoice di
+    INNER JOIN dim_track trd
+	ON (cd.customer_id = def.CustomerID AND cd.valid_to = '9999-12-31 00:00:00' 
+		AND tid.year = def.year AND tid.quarter = def.quarter AND tid.month = def.month AND tid.day = def.day AND tid.day_of_week = def.day_of_week
+        AND di.invoice_id = def.InvoiceId AND di.valid_to = '9999-12-31 00:00:00'
+        AND trd.track_id = def.TrackId AND trd.valid_to = '9999-12-31 00:00:00'
+);
