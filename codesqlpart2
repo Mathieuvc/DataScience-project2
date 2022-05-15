@@ -52,17 +52,17 @@ SELECT dt.track_key
 FROM dim_track dt
 INNER JOIN stg_track st 
 ON dt.track_id = st.Track_Id
-WHERE (dt.name <> st.track_name OR dt.name <> st.album_name OR dt.artist <> st.artist_name)
+WHERE (dt.track_name <> st.track_name OR dt.album_name <> st.album_name OR dt.artist_name <> st.artist_name)
 	AND dt.valid_to = '9999-12-31 00:00:00';
 
 /* Identify the tracks from the staging that were added */
 
-INSERT INTO dim_track(track_id, name, album, artist)
+INSERT INTO dim_track(track_id, track_name, album_name, artist_name)
 SELECT st.Track_Id, st.track_name, st.album_name, st.artist_name
 FROM stg_track st 
 LEFT JOIN dim_track dt
 ON dt.track_id = st.Track_Id
-WHERE (dt.name <> st.track_name OR dt.album <> st.album_name OR dt.artist <> st.artist_name)
+WHERE (dt.track_name <> st.track_name OR dt.album_name <> st.album_name OR dt.artist_name <> st.artist_name)
 	AND (dt.valid_to = '9999-12-31 00:00:00' OR dt.valid_to IS NULL);
 
 /* Change the valid date for the changed tracks*/ 
