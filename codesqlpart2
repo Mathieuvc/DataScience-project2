@@ -2,6 +2,8 @@
 
 USE mytunes_dim;
 
+DROP TABLE tmp_customers_changed;
+
 /* Create staging table for customers*/ 
 
 CREATE TABLE stg_customers(
@@ -32,8 +34,10 @@ WHERE (dc.company <> sc.company OR dc.last_name <> sc.lastname OR dc.first_name 
 UPDATE dim_customers SET valid_to = NOW() WHERE customer_key IN 
 	(SELECT customer_key
     FROM tmp_customers_changed); 
-    
-    DROP TABLE tmp_customers_changed; 
+ 
+DROP TABLE tmp_customers_changed; 
+
+DROP TABLE tmp_tracks_changed; 
 
 /* create staging table for track*/ 
 
@@ -45,7 +49,6 @@ FROM MyTunes.Artist ar INNER JOIN
 		ON tr.AlbumId = al.AlbumId) t
 	ON ar.ArtistId = t.ArtistId);
 
-
 /* create temporary table for track*/ 
 
 CREATE TEMPORARY TABLE tmp_tracks_changed 
@@ -55,7 +58,6 @@ INNER JOIN stg_track st
 ON dt.track_id = st.Track_Id
 WHERE (dt.track_name <> st.track_name OR dt.album_name <> st.album_name OR dt.artist_name <> st.artist_name)
 	AND dt.valid_to = '9999-12-31 00:00:00';
-
 
 /* Identify the tracks from the staging that were added */
 
@@ -73,30 +75,53 @@ UPDATE dim_track SET valid_to = NOW() WHERE track_key IN
 	(SELECT track_key
     FROM tmp_tracks_changed); 
     
-    DROP TABLE tmp_customers_changed;
-    DROP TABLE tmp_tracks_changed 
-  
-  
-  
-/* Create staging table for time*/ 
+DROP TABLE tmp_tracks_changed; 
 
-CREATE TABLE stg_time(
-select distinct year(InvoiceDate), month(InvoiceDate), quarter(InvoiceDate), dayofmonth(InvoiceDate), dayofweek(InvoiceDate)
-FROM MyTunes.invoice);
+DROP TABLE tmp_invoice_changed;
 
-/* create temporary table for customer*/ 
+/* create staging table for invoice */
+CREATE TABLE stg_invoice(
+SELECT * FROM MyTunes.Invoice
+);
 
-CREATE TEMPORARY TABLE tmp_time_changed 
-SELECT dc.time_key
-FROM dim_time dt
-LEFT JOIN stg_time st ON year(InvioceDate) = st.year 
-				AND month(InvoiceDate) = st.month
-                           	AND quarter(InvoiceDate) = st.quarter
-                            	AND dayofmonth(InvoiceDate) = st.dayofmonth
-WHERE dt.day_of_week IS NULL;
+/* create temporary table for invoice*/ 
+CREATE TEMPORARY TABLE tmp_invoice_changed 
+SELECT di.invoice_key
+FROM dim_invoice di
+INNER JOIN stg_invoice si
+ON di.invoice_id = si.invoiceid
+WHERE (di.billing_country <> si.BillingCountry)
+	AND di.valid_to = '9999-12-31 00:00:00';
 
-INSERT INTO dim_time(year, month, quarter, day_of_month, day_of_week)
+/* Identify the invoices from the staging that were added */
+INSERT INTO dim_invoice(invoice_id, billing_country)
+SELECT si.invoiceid, si.billingcountry
+FROM stg_invoice si 
+LEFT JOIN dim_invoice di
+ON di.invoice_id = si.invoiceid
+WHERE (di.billing_country <> si.BillingCountry)
+	AND (di.valid_to = '9999-12-31 00:00:00' OR di.valid_to IS NULL);
+    
+/* Change the valid date for the changed invoices */ 
+UPDATE dim_invoice SET valid_to = NOW() WHERE invoice_key IN 
+	(SELECT invoice_key
+    FROM tmp_invoice_changed); 
+
+DROP TABLE tmp_invoice_changed;
+
+DROP TABLE tmp_time_changed;
+
+/* Update the time dimension */  
+DROP TABLE tmp_time_changed;
+
+CREATE TABLE tmp_time_changed 
+SELECT year(si.invoicedate) as year, month(si.invoicedate) as month, day(si.invoicedate) as day, quarter(si.invoicedate) as quarter,dayofweek(si.invoicedate) as day_of_week
+FROM stg_invoice si LEFT JOIN dim_time dt
+ON year(InvoiceDate) = dt.year AND month(InvoiceDate) = month AND quarter(InvoiceDate) = dt.quarter AND day(InvoiceDate) = dt.day
+WHERE dt.quarter IS NULL;
+
+INSERT INTO dim_time(year, month, day, quarter, day_of_week)
 SELECT *
-FROM tmp_time_changed;
+FROM tmp_time_changed; 
 
 DROP TABLE tmp_time_changed;
