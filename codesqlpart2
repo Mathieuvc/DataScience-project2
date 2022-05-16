@@ -3,11 +3,14 @@
 USE mytunes_dim;
 
 /* Create staging table for customers*/ 
+/*Load the data from the transactional data for the customers dimension.*/
 
 CREATE TABLE stg_customers(
 SELECT * FROM MyTunes.customer );
 
 /* create temporary table for customer*/ 
+/* Compare the loaded data from the transactional data stored in stg_customers with the data already loaded in our warehouse (dim_customers).*/
+/* Add the customer_key in tmp_customers_changed to save all the customers that have had an update(thanks to the comparison between the old and new values in the data).*/
 
 CREATE TEMPORARY TABLE tmp_customers_changed 
 SELECT dc.customer_key
@@ -17,7 +20,7 @@ ON dc.customer_id = sc.CustomerId
 WHERE (dc.company <> sc.company OR dc.last_name <> sc.lastname OR dc.first_name <> sc.firstname OR dc.address <> sc.address OR dc.city <> sc.city OR dc.state <> sc.state OR dc.postalcode <> sc.postalcode OR dc.email <> sc.email)
 	AND dc.valid_to = '9999-12-31 00:00:00';
 
-/* Identify the cutomers from the staging that were added */
+/* Insert into warehouse data all the customers that have had an update and the new customers (thanks to the dc.attribute IS NULL). */
 
 INSERT INTO dim_customers(customer_id, company, first_name, last_name, address, city, state, postalcode, email)
 SELECT sc.CustomerId, sc.company, sc.FirstName, sc.LastName, sc.Address, sc.City, sc.State, sc.postalcode, sc.Email
