@@ -24,7 +24,7 @@ SELECT sc.CustomerId, sc.company, sc.FirstName, sc.LastName, sc.Address, sc.City
 FROM stg_customers sc 
 LEFT JOIN dim_customers dc
 ON dc.customer_id = sc.CustomerId
-WHERE (dc.company <> sc.company OR dc.last_name <> sc.lastname OR dc.first_name <> sc.firstname OR dc.address <> sc.address OR dc.city <> sc.city OR dc.state <> sc.state OR dc.postalcode <> sc.postalcode OR dc.email <> sc.email)
+WHERE (dc.company <> sc.company OR dc.last_name <> sc.lastname OR dc.first_name <> sc.firstname OR dc.address <> sc.address OR dc.city <> sc.city OR dc.state <> sc.state OR dc.postalcode <> sc.postalcode OR dc.email <> sc.email OR dc.first_name is NULL)
 	AND (dc.valid_to = '9999-12-31 00:00:00' OR dc.valid_to IS NULL);
 
 /* Change the valid date */ 
@@ -38,7 +38,7 @@ DROP TABLE tmp_customers_changed;
 /* create staging table for track*/ 
 
 CREATE TABLE stg_track(
-SELECT t.TrackId as track_id, t.Name as track_name, t.album_id as album_id, t.title as album_name , t.artistid as artist_id, ar.Name as artist_name, t.unitprice as unit_price
+SELECT t.TrackId as track_id, t.Name as track_name, t.albumid as album_id, t.title as album_name , t.artistid as artist_id, ar.Name as artist_name, t.unitprice as unit_price
 FROM MyTunes.Artist ar INNER JOIN 
 	(SELECT TrackId, Name, Title, ArtistId, tr.AlbumId, tr.unitprice
 	FROM MyTunes.Track tr INNER JOIN MyTunes.Album al
@@ -49,7 +49,7 @@ FROM MyTunes.Artist ar INNER JOIN
 
 CREATE TEMPORARY TABLE tmp_tracks_changed 
 SELECT dt.track_key
-FROM dim_track dt
+FROM  dim_track dt
 INNER JOIN stg_track st 
 ON dt.track_id = st.Track_Id
 WHERE (dt.track_name <> st.track_name OR dt.album_id <> st.album_id OR dt.album_name <> st.album_name OR dt.artist_id <> st.artist_id OR dt.artist_name <> st.artist_name OR dt.unit_price <> st.unit_price)
@@ -62,7 +62,7 @@ SELECT st.Track_Id, st.track_name, st.album_id, st.album_name, st.artist_id, st.
 FROM stg_track st 
 LEFT JOIN dim_track dt
 ON dt.track_id = st.Track_Id
-WHERE (dt.track_name <> st.track_name OR dt.album_id <> st.album_id OR dt.album_name <> st.album_name OR dt.artist_id <> st.artist_id OR dt.artist_name <> st.artist_name OR dt.unit_price <> st.unit_price)
+WHERE (dt.track_name <> st.track_name OR dt.album_id <> st.album_id OR dt.album_name <> st.album_name OR dt.artist_id <> st.artist_id OR dt.artist_name <> st.artist_name OR dt.unit_price <> st.unit_price OR dt.track_name is NULL)
 	AND (dt.valid_to = '9999-12-31 00:00:00' OR dt.valid_to IS NULL);
 
 /* Change the valid date for the changed tracks*/ 
@@ -94,7 +94,7 @@ SELECT si.InvoiceId, si.BillingCountry, si.BillingState, si.Billingcity, si.Bill
 FROM stg_invoice si 
 LEFT JOIN dim_invoice di
 ON di.invoice_id = si.invoiceid
-WHERE (di.billing_country <> si.BillingCountry OR di.billing_state <> si.Billingstate OR di.billing_city <> si.Billingcity OR di.billing_address <> si.Billingaddress OR di.billing_postal_code <> si.Billingpostalcode OR di.total <> si.total)
+WHERE (di.billing_country <> si.BillingCountry OR di.billing_state <> si.Billingstate OR di.billing_city <> si.Billingcity OR di.billing_address <> si.Billingaddress OR di.billing_postal_code <> si.Billingpostalcode OR di.total <> si.total OR di.billing_country is NULL)
 	AND (di.valid_to = '9999-12-31 00:00:00' OR di.valid_to IS NULL);
     
 /* Change the valid date for the changed invoices */ 
@@ -122,11 +122,6 @@ DROP TABLE tmp_time_changed;
 
 CREATE TABLE stg_InvoiceLine(
 SELECT * FROM MyTunes.InvoiceLine);
-
-/* create staging table for Invoice */
-
-CREATE TABLE stg_Invoice(
-SELECT * FROM MyTunes.Invoice);
 
 /* Update fact */ 
 
