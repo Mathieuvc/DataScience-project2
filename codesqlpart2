@@ -3,7 +3,7 @@
 USE mytunes_dim;
 
 /* Create staging table for customers*/ 
-/*Load the data from the transactional data for the customers dimension.*/
+/* Load the data from the transactional data for the customers dimension.*/
 
 CREATE TABLE stg_customers(
 SELECT * FROM MyTunes.customer );
@@ -39,7 +39,7 @@ UPDATE dim_customers SET valid_to = NOW() WHERE customer_key IN
 DROP TABLE tmp_customers_changed; 
 
 /* Create staging table for track*/ 
-/*Load the data from the transactional data for the track dimension.*/
+/* Load the data from the transactional data for the track dimension.*/
 
 CREATE TABLE stg_track(
 SELECT t.TrackId as track_id, t.Name as track_name, t.albumid as album_id, t.title as album_name , t.artistid as artist_id, ar.Name as artist_name, t.unitprice as unit_price
@@ -80,14 +80,14 @@ WHERE track_key IN
 
 DROP TABLE tmp_tracks_changed; 
 
-/* create staging table for invoice */
-/*Load the data from the transactional data for the invoice dimension.*/
+/* Create staging table for invoice */
+/* Load the data from the transactional data for the invoice dimension.*/
 
 CREATE TABLE stg_invoice(
 SELECT * FROM MyTunes.Invoice
 );
 
-/* create temporary table for invoice*/ 
+/* Create temporary table for invoice*/ 
 /* Compare the loaded data from the transactional data stored in stg_invoice with the data already loaded in our data warehouse (dim_invoice).*/
 /* Add the invoice_key in tmp_invoice_changed to save all the invoice that have had an update(thanks to the comparison between the old and new values in the data).*/
 
@@ -127,7 +127,7 @@ FROM stg_invoice si LEFT JOIN dim_time dt
 ON year(InvoiceDate) = dt.year AND month(InvoiceDate) = dt.month AND quarter(InvoiceDate) = dt.quarter AND day(InvoiceDate) = dt.day
 WHERE dt.quarter IS NULL;
 
-/* insert into dim_time the different time attributes of the added invoices*/
+/* Insert into dim_time the different time attributes of the added invoices*/
 
 INSERT INTO dim_time(year, month, day, quarter, day_of_week)
 SELECT *
@@ -135,15 +135,15 @@ FROM tmp_time_changed;
 
 DROP TABLE tmp_time_changed;
 
-/*Create staging table for InvoiceLine */
-/*Load the data from the transactional data for the InvoiceLine dimension.*/
+/* Create staging table for InvoiceLine */
+/* Load the data from the transactional data for the InvoiceLine dimension.*/
 
 CREATE TABLE stg_InvoiceLine(
 SELECT * FROM MyTunes.InvoiceLine);
 
 /* Update fact */ 
 /* Select the different keys and order_value from the updated data identifiable thanks to the ' where the time is > "2022-05-14 00:00:00" ' */ 
-/* insert these in the fact_table */ 
+/* Insert these into the fact_table */ 
 
 INSERT INTO fct_order_value(customer_key, track_key, time_key, invoice_key, order_value)	
 
