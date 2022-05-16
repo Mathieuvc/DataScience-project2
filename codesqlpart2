@@ -9,7 +9,7 @@ CREATE TABLE stg_customers(
 SELECT * FROM MyTunes.customer );
 
 /* create temporary table for customer*/ 
-/* Compare the loaded data from the transactional data stored in stg_customers with the data already loaded in our warehouse (dim_customers).*/
+/* Compare the loaded data from the transactional data stored in stg_customers with the data already loaded in our data warehouse (dim_customers).*/
 /* Add the customer_key in tmp_customers_changed to save all the customers that have had an update(thanks to the comparison between the old and new values in the data).*/
 
 CREATE TEMPORARY TABLE tmp_customers_changed 
@@ -20,7 +20,7 @@ ON dc.customer_id = sc.CustomerId
 WHERE (dc.company <> sc.company OR dc.last_name <> sc.lastname OR dc.first_name <> sc.firstname OR dc.address <> sc.address OR dc.city <> sc.city OR dc.state <> sc.state OR dc.postalcode <> sc.postalcode OR dc.email <> sc.email)
 	AND dc.valid_to = '9999-12-31 00:00:00';
 
-/* Insert into warehouse data all the customers that have had an update and the new customers (thanks to the dc.attribute IS NULL). */
+/* Insert into the data warehouse all the customers that have had an update and the new customers (thanks to the dc.'attribute' IS NULL). */
 
 INSERT INTO dim_customers(customer_id, company, first_name, last_name, address, city, state, postalcode, email)
 SELECT sc.CustomerId, sc.company, sc.FirstName, sc.LastName, sc.Address, sc.City, sc.State, sc.postalcode, sc.Email
@@ -30,7 +30,7 @@ ON dc.customer_id = sc.CustomerId
 WHERE (dc.company <> sc.company OR dc.last_name <> sc.lastname OR dc.first_name <> sc.firstname OR dc.address <> sc.address OR dc.city <> sc.city OR dc.state <> sc.state OR dc.postalcode <> sc.postalcode OR dc.email <> sc.email OR dc.first_name is NULL)
 	AND (dc.valid_to = '9999-12-31 00:00:00' OR dc.valid_to IS NULL);
 
-/* Change the valid date */ 
+/* Update the valid date of all the customers that have been updated (listed in the tmp_customers_changed table).*/ 
 
 UPDATE dim_customers SET valid_to = NOW() WHERE customer_key IN 
 	(SELECT customer_key
@@ -38,7 +38,8 @@ UPDATE dim_customers SET valid_to = NOW() WHERE customer_key IN
  
 DROP TABLE tmp_customers_changed; 
 
-/* create staging table for track*/ 
+/* Create staging table for track*/ 
+/*Load the data from the transactional data for the track dimension.*/
 
 CREATE TABLE stg_track(
 SELECT t.TrackId as track_id, t.Name as track_name, t.albumid as album_id, t.title as album_name , t.artistid as artist_id, ar.Name as artist_name, t.unitprice as unit_price
@@ -48,7 +49,9 @@ FROM MyTunes.Artist ar INNER JOIN
 		ON tr.AlbumId = al.AlbumId) t
 	ON ar.ArtistId = t.ArtistId);
 
-/* create temporary table for track*/ 
+/* Create temporary table for track*/ 
+/* Compare the loaded data from the transactional data stored in stg_track with the data already loaded in our data warehouse (dim_track).*/
+/* Add the track_key in tmp_tracks_changed to save all the tracks that have had an update(thanks to the comparison between the old and new values in the data).*/
 
 CREATE TEMPORARY TABLE tmp_tracks_changed 
 SELECT dt.track_key
@@ -58,7 +61,7 @@ ON dt.track_id = st.Track_Id
 WHERE (dt.track_name <> st.track_name OR dt.album_id <> st.album_id OR dt.album_name <> st.album_name OR dt.artist_id <> st.artist_id OR dt.artist_name <> st.artist_name OR dt.unit_price <> st.unit_price)
 	AND dt.valid_to = '9999-12-31 00:00:00';
 
-/* Identify the tracks from the staging that were added */
+/* Insert into the data warehouse all the tracks that have had an update and the new tracks (thanks to the dt.'attribute' IS NULL). */
 
 INSERT INTO dim_track(track_id, track_name, album_id, album_name, artist_id, artist_name, unit_price)
 SELECT st.Track_Id, st.track_name, st.album_id, st.album_name, st.artist_id, st.artist_name, st.unit_price
@@ -68,7 +71,7 @@ ON dt.track_id = st.Track_Id
 WHERE (dt.track_name <> st.track_name OR dt.album_id <> st.album_id OR dt.album_name <> st.album_name OR dt.artist_id <> st.artist_id OR dt.artist_name <> st.artist_name OR dt.unit_price <> st.unit_price OR dt.track_name is NULL)
 	AND (dt.valid_to = '9999-12-31 00:00:00' OR dt.valid_to IS NULL);
 
-/* Change the valid date for the changed tracks*/ 
+/* Update the valid date of all the tracks that have been updated (listed in the tmp_tracks_changed table).*/ 
 
 UPDATE dim_track SET valid_to = NOW() 
 WHERE track_key IN 
@@ -78,11 +81,16 @@ WHERE track_key IN
 DROP TABLE tmp_tracks_changed; 
 
 /* create staging table for invoice */
+/*Load the data from the transactional data for the invoice dimension.*/
+
 CREATE TABLE stg_invoice(
 SELECT * FROM MyTunes.Invoice
 );
 
 /* create temporary table for invoice*/ 
+/* Compare the loaded data from the transactional data stored in stg_invoice with the data already loaded in our data warehouse (dim_invoice).*/
+/* Add the invoice_key in tmp_invoice_changed to save all the invoice that have had an update(thanks to the comparison between the old and new values in the data).*/
+
 CREATE TEMPORARY TABLE tmp_invoice_changed 
 SELECT di.invoice_key
 FROM dim_invoice di
@@ -91,7 +99,8 @@ ON di.invoice_id = si.invoiceid
 WHERE (di.billing_country <> si.BillingCountry OR di.billing_state <> si.Billingstate OR di.billing_city <> si.Billingcity OR di.billing_address <> si.Billingaddress OR di.billing_postal_code <> si.Billingpostalcode OR di.total <> si.total)
 	AND di.valid_to = '9999-12-31 00:00:00';
 
-/* Identify the invoices from the staging that were added */
+/* Insert into the data warehouse all the invoices that have had an update and the new invoices (thanks to the dt.'attribute' IS NULL). */
+
 INSERT INTO dim_invoice(invoice_id, billing_country, billing_state, billing_city, billing_address, billing_postal_code, total)
 SELECT si.InvoiceId, si.BillingCountry, si.BillingState, si.Billingcity, si.Billingaddress, si.Billingpostalcode, si.Total
 FROM stg_invoice si 
@@ -100,20 +109,25 @@ ON di.invoice_id = si.invoiceid
 WHERE (di.billing_country <> si.BillingCountry OR di.billing_state <> si.Billingstate OR di.billing_city <> si.Billingcity OR di.billing_address <> si.Billingaddress OR di.billing_postal_code <> si.Billingpostalcode OR di.total <> si.total OR di.billing_country is NULL)
 	AND (di.valid_to = '9999-12-31 00:00:00' OR di.valid_to IS NULL);
     
-/* Change the valid date for the changed invoices */ 
+/* Update the valid date of all the invoices that have been updated (listed in the tmp_invoice_changed table).*/ 
+
 UPDATE dim_invoice SET valid_to = NOW() WHERE invoice_key IN 
 	(SELECT invoice_key
     FROM tmp_invoice_changed); 
 
 DROP TABLE tmp_invoice_changed;
 
-/* Update the time dimension */  
+/* Create a tempororary table for time */  
+/* Compare the loaded data from the transactional data stored in stg_invoice with the data already loaded in our data warehouse (dim_time).*/
+/* Add the different time attributes in tmp_invoice_changed to save all the invoice that have been updated.*/
 
 CREATE TABLE tmp_time_changed 
 SELECT year(si.invoicedate) as year, month(si.invoicedate) as month, day(si.invoicedate) as day, quarter(si.invoicedate) as quarter,dayofweek(si.invoicedate) as day_of_week
 FROM stg_invoice si LEFT JOIN dim_time dt
-ON year(InvoiceDate) = dt.year AND month(InvoiceDate) = month AND quarter(InvoiceDate) = dt.quarter AND day(InvoiceDate) = dt.day
+ON year(InvoiceDate) = dt.year AND month(InvoiceDate) = dt.month AND quarter(InvoiceDate) = dt.quarter AND day(InvoiceDate) = dt.day
 WHERE dt.quarter IS NULL;
+
+/* insert into dim_time the different time attributes of the added invoices*/
 
 INSERT INTO dim_time(year, month, day, quarter, day_of_week)
 SELECT *
@@ -121,12 +135,15 @@ FROM tmp_time_changed;
 
 DROP TABLE tmp_time_changed;
 
-/* create staging table for InvoiceLine */
+/*Create staging table for InvoiceLine */
+/*Load the data from the transactional data for the InvoiceLine dimension.*/
 
 CREATE TABLE stg_InvoiceLine(
 SELECT * FROM MyTunes.InvoiceLine);
 
 /* Update fact */ 
+/* Select the different keys and order_value from the updated data identifiable thanks to the ' where the time is > "2022-05-14 00:00:00" ' */ 
+/* insert these in the fact_table */ 
 
 INSERT INTO fct_order_value(customer_key, track_key, time_key, invoice_key, order_value)	
 
@@ -140,12 +157,12 @@ FROM
 			ON tr.Track_Id = il.TrackID) abc
 		ON i.InvoiceId = abc.InvoiceId
         WHERE i.invoicedate > "2022-05-14 00:00:00") def
-	INNER JOIN dim_customers cd
+    INNER JOIN dim_customers cd
     INNER JOIN dim_time tid
     INNER JOIN dim_invoice di
     INNER JOIN dim_track trd
 	ON (cd.customer_id = def.CustomerID AND cd.valid_to = '9999-12-31 00:00:00' 
-		AND tid.year = def.year AND tid.quarter = def.quarter AND tid.month = def.month AND tid.day = def.day AND tid.day_of_week = def.day_of_week
+	AND tid.year = def.year AND tid.quarter = def.quarter AND tid.month = def.month AND tid.day = def.day AND tid.day_of_week = def.day_of_week
         AND di.invoice_id = def.InvoiceId AND di.valid_to = '9999-12-31 00:00:00'
         AND trd.track_id = def.TrackId AND trd.valid_to = '9999-12-31 00:00:00'
 );
