@@ -1,4 +1,5 @@
 /* 2nd PART */
+/* This 2nd Phase consits of updating the datawarehouse. */
 
 USE mytunes_dim;
 
