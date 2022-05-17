@@ -2,15 +2,16 @@
 
 USE mytunes_dim;
 
-/* Create staging table for customers*/ 
-/* Load the data from the transactional data for the customers dimension.*/
+/* Create the staging table for customers */ 
+/* The staging table is created by loading all the up-to-date data from the transactional database table in the staging table*/
 
 CREATE TABLE stg_customers(
 SELECT * FROM MyTunes.customer );
 
-/* create temporary table for customer*/ 
-/* Compare the loaded data from the transactional data stored in stg_customers with the data already loaded in our data warehouse (dim_customers).*/
+/* Create temporary table for customer */ 
+/* Compare the loaded data from the transactional data stored in the staging table stg_customers with the data in the dimension already loaded in our data warehouse (dim_customers).*/
 /* Add the customer_key in tmp_customers_changed to save all the customers that have had an update(thanks to the comparison between the old and new values in the data).*/
+/* The key is a surrogate key which allows us to uniquely identify each row and also allows us to track history. */
 
 CREATE TEMPORARY TABLE tmp_customers_changed 
 SELECT dc.customer_key
@@ -20,7 +21,7 @@ ON dc.customer_id = sc.CustomerId
 WHERE (dc.company <> sc.company OR dc.last_name <> sc.lastname OR dc.first_name <> sc.firstname OR dc.address <> sc.address OR dc.city <> sc.city OR dc.state <> sc.state OR dc.postalcode <> sc.postalcode OR dc.email <> sc.email)
 	AND dc.valid_to = '9999-12-31 00:00:00';
 
-/* Insert into the data warehouse all the customers that have had an update and the new customers (thanks to the dc.'attribute' IS NULL). */
+/* Insert into the data warehouse all the customers that have had an update (thanks to the <>) and the new customers (thanks to the dc.'attribute' IS NULL). */
 
 INSERT INTO dim_customers(customer_id, company, first_name, last_name, address, city, state, postalcode, email)
 SELECT sc.CustomerId, sc.company, sc.FirstName, sc.LastName, sc.Address, sc.City, sc.State, sc.postalcode, sc.Email
@@ -39,7 +40,7 @@ UPDATE dim_customers SET valid_to = NOW() WHERE customer_key IN
 DROP TABLE tmp_customers_changed; 
 
 /* Create staging table for track*/ 
-/* Load the data from the transactional data for the track dimension.*/
+/* Load the data from the transactional data for the track staging table.*/
 
 CREATE TABLE stg_track(
 SELECT t.TrackId as track_id, t.Name as track_name, t.albumid as album_id, t.title as album_name , t.artistid as artist_id, ar.Name as artist_name, t.unitprice as unit_price
@@ -52,6 +53,7 @@ FROM MyTunes.Artist ar INNER JOIN
 /* Create temporary table for track*/ 
 /* Compare the loaded data from the transactional data stored in stg_track with the data already loaded in our data warehouse (dim_track).*/
 /* Add the track_key in tmp_tracks_changed to save all the tracks that have had an update(thanks to the comparison between the old and new values in the data).*/
+/* The key is a surrogate key which allows us to uniquely identify each row and also allows us to track history. */
 
 CREATE TEMPORARY TABLE tmp_tracks_changed 
 SELECT dt.track_key
@@ -81,7 +83,7 @@ WHERE track_key IN
 DROP TABLE tmp_tracks_changed; 
 
 /* Create staging table for invoice */
-/* Load the data from the transactional data for the invoice dimension.*/
+/* Load the data from the transactional database into the invoice staging table .*/
 
 CREATE TABLE stg_invoice(
 SELECT * FROM MyTunes.Invoice
@@ -90,6 +92,7 @@ SELECT * FROM MyTunes.Invoice
 /* Create temporary table for invoice*/ 
 /* Compare the loaded data from the transactional data stored in stg_invoice with the data already loaded in our data warehouse (dim_invoice).*/
 /* Add the invoice_key in tmp_invoice_changed to save all the invoice that have had an update(thanks to the comparison between the old and new values in the data).*/
+/* The key is a surrogate key which allows us to uniquely identify each row and also allows us to track history. */
 
 CREATE TEMPORARY TABLE tmp_invoice_changed 
 SELECT di.invoice_key
@@ -118,8 +121,10 @@ UPDATE dim_invoice SET valid_to = NOW() WHERE invoice_key IN
 DROP TABLE tmp_invoice_changed;
 
 /* Create a tempororary table for time */  
+/* Here, we don't have to adapt the valid_from and valid_to. Consequently, this makes it a bit easier for us. */
 /* Compare the loaded data from the transactional data stored in stg_invoice with the data already loaded in our data warehouse (dim_time).*/
-/* Add the different time attributes in tmp_invoice_changed to save all the invoice that have been updated.*/
+/* The comparison returns all the time records that are in the stg_invoice table but not in the time dimension. */
+/* Add the different time attributes in tmp_invoice_changed.*/
 
 CREATE TABLE tmp_time_changed 
 SELECT year(si.invoicedate) as year, month(si.invoicedate) as month, day(si.invoicedate) as day, quarter(si.invoicedate) as quarter,dayofweek(si.invoicedate) as day_of_week
@@ -127,7 +132,7 @@ FROM stg_invoice si LEFT JOIN dim_time dt
 ON year(InvoiceDate) = dt.year AND month(InvoiceDate) = dt.month AND quarter(InvoiceDate) = dt.quarter AND day(InvoiceDate) = dt.day
 WHERE dt.quarter IS NULL;
 
-/* Insert into dim_time the different time attributes of the added invoices*/
+/* Insert into dim_time the new time records*/
 
 INSERT INTO dim_time(year, month, day, quarter, day_of_week)
 SELECT *
