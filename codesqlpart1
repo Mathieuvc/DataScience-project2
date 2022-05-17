@@ -1,8 +1,23 @@
+#Aim of this project: manage the datawarehouse of the MyTunes online platform to be able to analyse the past sales and incoming revenues. 
+#This 1st Phase consits of building the datawarehouse, so we create a new Schema: mytunes_dim
+
 DROP SCHEMA IF EXISTS mytunes_dim;
 
 CREATE SCHEMA mytunes_dim;
 
 USE mytunes_dim;
+
+#The next step is to create the different dimensions present in our datawarehouse. 
+#A dimension table is a table connected to the fact table with a foreign key. 
+#we do this by creating Tables for: 
+#		Customers
+#		Track
+#		Time
+#		Invoice 
+
+#In each table we inserted valid_from & valid_to which indicates the time at which a row is entered in a dimension and till when it we be valid. 
+#For the time dimension this is not necessaray since it already indicates the time validity. 
+
 
 /* creating customer dimension */
 
@@ -88,6 +103,11 @@ INSERT INTO dim_invoice(invoice_id, billing_country, billing_state, billing_city
 SELECT InvoiceId, BillingCountry, BillingState, Billingcity, Billingaddress, Billingpostalcode, Total
 FROM MyTunes.invoice;
 
+
+
+#Now that the different dimension tables are created, we can start with the fact table.   
+#A fact table works with the different dimension tables created above and so it contains the data to be able to analyze an process it.  
+#So here we see it contains the foreign keys of the dimension tables and a measure that is able to process the total amount paid by a customer.
 
 /* create the fact table of our star schema */
 
