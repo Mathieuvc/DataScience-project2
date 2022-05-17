@@ -1,6 +1,7 @@
 #Aim of this project: manage the datawarehouse of the MyTunes online platform to be able to analyse the past sales and incoming revenues. 
-#This 1st Phase consits of building the datawarehouse, so we create a new Schema: mytunes_dim
+#This 1st Phase consits of building the datawarehouse, so we create a new Schema: mytunes_dim. 
 
+#To be prudent, we drop the schema to be able to re-run it without errors. 
 DROP SCHEMA IF EXISTS mytunes_dim;
 
 CREATE SCHEMA mytunes_dim;
@@ -8,15 +9,16 @@ CREATE SCHEMA mytunes_dim;
 USE mytunes_dim;
 
 #The next step is to create the different dimensions present in our datawarehouse. 
-#A dimension table is a table connected to the fact table with a foreign key. 
-#we do this by creating Tables for: 
+#A dimension table is a table connected to the fact table thanks to the primary key.
+#This primary key is auto-incremented which will automatically generate a new number each time we insert a new record into the table. 
+#We do this by creating Tables for: 
 #		Customers
 #		Track
 #		Time
 #		Invoice 
-
 #In each table we inserted valid_from & valid_to which indicates the time at which a row is entered in a dimension and till when it we be valid. 
 #For the time dimension this is not necessaray since it already indicates the time validity. 
+#After we create the table, we each time use "insert into" to add the records of the transactional database into the new tables. 
 
 
 /* creating customer dimension */
@@ -57,6 +59,8 @@ CREATE TABLE IF NOT EXISTS dim_track(
     valid_to DATETIME NOT NULL DEFAULT '9999-12-31 00:00:00'
 );
 
+
+#To be able to insert the information of the transacional datawarehouse in this new table we need to use Inner Join since the information is initially located in two different tables. 
 /* inserting info in track dimension table */
 
 INSERT INTO dim_track(track_id, track_name, album_id, album_name, artist_id, artist_name, unit_price)
@@ -78,6 +82,7 @@ CREATE TABLE IF NOT EXISTS dim_time(
     day_of_week INT NOT NULL 
 );
 
+#Using select DISTINCT returns only distinct/different values because you can have duplicates in a table and we only want distinct values. 
 /* inserting info in time dimension table */
 
 INSERT INTO dim_time(year, month, quarter, day, day_of_week)
