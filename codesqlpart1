@@ -109,9 +109,8 @@ SELECT InvoiceId, BillingCountry, BillingState, Billingcity, Billingaddress, Bil
 FROM MyTunes.invoice;
 
 
-
 #Now that the different dimension tables are created, we can start with the fact table.   
-#A fact table works with the different dimension tables created above and so it contains the data to be able to analyze an process it.  
+#A fact table works with the different dimension tables created above and so it contains the data to be able to analyze and process it.  
 #So here we see it contains the foreign keys of the dimension tables and a measure that is able to process the total amount paid by a customer.
 
 /* create the fact table of our star schema */
