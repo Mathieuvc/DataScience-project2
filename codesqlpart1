@@ -149,3 +149,53 @@ FROM
         AND di.invoice_id = def.InvoiceId AND di.valid_to = '9999-12-31 00:00:00'
         AND trd.track_id = def.TrackId AND trd.valid_to = '9999-12-31 00:00:00'
 );
+
+
+#In order to illustrate the business relevance of the dimensional data structure, we will illustrate this by doing some queries 
+#Queries using our star schema to compute the sales per artist, album, customer and BillingCountry per year. 
+
+#Sales per artist; this allows us to see which artist has sold the most tracks. 
+#This could be interesting to take into account which artists we have to closely follow-up when they release a new track.
+#We might want to add those tracks to our platform
+#The time dimension allows us to track the changes in sales along the years; in this way we can track the popularity of the artists
+
+SELECT dt.artist_name, sum(f.order_value) as sales , dti.year
+FROM fct_order_value f INNER JOIN dim_track dt INNER JOIN dim_time dti
+	on (dt.track_key = f.track_key AND dti.time_key = f.time_key)
+group by dt.artist_name, dti.year
+order by dt.artist_name;
+
+#Sales per album; this allows us to see which albums have been sold the most. 
+#This could be interesting to e.g. search for albums of the same artist or genre and add this to our platform
+#The time dimension allows us to track the changes in sales along the years; in this way we can track the popularity of the albums
+SELECT dt.album_name, sum(f.order_value) as sales, dti.year 
+FROM fct_order_value f JOIN dim_track dt  JOIN dim_time dti
+	on (dt.track_key = f.track_key AND dti.time_key = f.time_key)
+group by dt.album_name, dti.year 
+order by dt.album_name;
+
+#Sales per customer; this allows us to see which customer has bought the most on our platform. 
+#This allows us to segment the customers according to their spending
+#We might want to think of different marketing offers according to the segments
+#The time dimension allows us to track the changes in sales along the years; in this way we can track whether a customer is still active or not
+#If the customer is no longer active; we could target them by remembering our services and maybe offer them some discounts to re-join our platform
+
+SELECT dc.first_name, dc.last_name, dc.address, dc.city, dc.state, dc.postalcode, dc.email, sum(f.order_value), dti.year
+FROM fct_order_value f JOIN dim_customers dc JOIN dim_time dti
+	on (dc.customer_key = f.customer_key AND dti.time_key = f.time_key)
+group by dc.first_name, dc.last_name, dc.address, dc.city, dc.state, dc.postalcode, dc.email, dti.year 
+Order by dc.last_name;
+
+#Sales per Billingcountry; this allows us to see which country has spends the most on our platform. 
+#This allows us to segment the countries according to their spending
+#We might want to think of different marketing offers according to the coutnry
+#The time dimension allows us to track the changes in sales along the years; in this way we can check whether there are certain trends in countries 
+#If for example, sales in a certain country decrease significantly, we might target a country to increase sales again
+
+SELECT di.billing_country, sum(f.order_value), dti.year
+FROM fct_order_value f JOIN dim_invoice di JOIN dim_time dti
+	on (di.invoice_key = f.invoice_key AND dti.time_key = f.time_key)
+group by di.billing_country, dti.year
+order by di.billing_country;
+
+
