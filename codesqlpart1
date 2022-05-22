@@ -152,7 +152,7 @@ FROM
 
 
 #In order to illustrate the business relevance of the dimensional data structure, we will illustrate this by doing some queries 
-#Queries using our star schema to compute the sales per artist, album, customer and BillingCountry per year. 
+#Queries using our star schema to compute the sales per artist, album, customer and BillingCountry per year
 
 #Sales per artist; this allows us to see which artist has sold the most tracks. 
 #This could be interesting to take into account which artists we have to closely follow-up when they release a new track.
